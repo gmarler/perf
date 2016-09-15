@@ -1,17 +1,19 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <procfs.h>
 #include <sys/procfs.h>
 #include "libproc.h"
 
 int object_iter(void *, const prmap_t *, const char *);
+int function_iter(void *arg, const GElf_Sym *sym, const char *func_name);
 
 int main(int argc, char **argv)
 {
-  pid_t pid_of_interest;
-  int   perr;
-  void *pshandle;
+  pid_t                 pid_of_interest;
+  int                   perr;
+  struct ps_prochandle *pshandle;
 
   if (argc == 2) {
     pid_of_interest = atoi(argv[1]);
@@ -30,23 +32,49 @@ int main(int argc, char **argv)
   }
 
   printf("%-120s %16s\n","OBJECT","BASE ADDRESS");
-  Pobject_iter(pshandle, object_iter, NULL);
+  Pobject_iter(pshandle, object_iter, (void *)pshandle);
 
   Pfree(pshandle);
 }
 
 int
-object_iter(void *cd, const prmap_t *pmp, const char *object_name)
+object_iter(void *Proc, const prmap_t *pmp, const char *object_name)
 {
-  printf("%-120s %016llX\n",object_name, pmp->pr_vaddr);
-  /*  Psymbol_iter(cd, object_name, , mask,
-   *               PRO_NATURAL, (proc_sym_f *)function_iter, DERP);
+  long function_count = 0;
+
+  printf("%-120s %016llX\n", object_name, pmp->pr_vaddr);
+  /*  
+   *  Psymbol_iter(cd, object_name, which, mask,
+   *               (proc_sym_f *)function_iter, DERP);
    *  */
+  /* printf("MAPNAME: %s, OBJECT NAME: %s\n",pmp->pr_mapname, object_name); */
+  /*
+  if (strcmp(pmp->pr_mapname,"a.out") == 0) {
+    return 0;
+  }
+  if (strstr(object_name,"ld.so") != NULL) {
+    return 0;
+  }
+  */
+  Psymbol_iter((struct ps_prochandle *)Proc,
+               object_name,
+               PR_SYMTAB,
+               BIND_GLOBAL | TYPE_FUNC,
+               function_iter,
+               (void *)&function_count);
+
+  printf("FUNCTION COUNT: %ld\n", function_count);
   return 0;
 }
 
 int
-function_iter()
+function_iter(void *function_count, const GElf_Sym *sym, const char *sym_name)
 {
+  if (sym_name != NULL) {
+    /* printf("\t%s\n",sym_name); */
+    (*((long *)function_count))++;
+  } else {
+    printf("\tNULL FUNCNAME\n");
+  }
   return 0;
 }
