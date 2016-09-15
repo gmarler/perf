@@ -32,6 +32,7 @@ int main(int argc, char **argv)
   }
 
   printf("%-120s %16s\n","OBJECT","BASE ADDRESS");
+  /* NOTE: Passing pshandle in as cd argument for use by Psymbol_iter later */
   Pobject_iter(pshandle, object_iter, (void *)pshandle);
 
   Pfree(pshandle);
