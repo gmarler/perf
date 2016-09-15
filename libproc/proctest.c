@@ -43,19 +43,6 @@ object_iter(void *Proc, const prmap_t *pmp, const char *object_name)
   long function_count = 0;
 
   printf("%-120s %016llX\n", object_name, pmp->pr_vaddr);
-  /*  
-   *  Psymbol_iter(cd, object_name, which, mask,
-   *               (proc_sym_f *)function_iter, DERP);
-   *  */
-  /* printf("MAPNAME: %s, OBJECT NAME: %s\n",pmp->pr_mapname, object_name); */
-  /*
-  if (strcmp(pmp->pr_mapname,"a.out") == 0) {
-    return 0;
-  }
-  if (strstr(object_name,"ld.so") != NULL) {
-    return 0;
-  }
-  */
   Psymbol_iter((struct ps_prochandle *)Proc,
                object_name,
                PR_SYMTAB,
