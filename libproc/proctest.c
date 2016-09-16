@@ -23,7 +23,7 @@ int main(int argc, char **argv)
     exit(1);
   }
 
-  /* Should we use PGRAB_RDONLY? */
+  /* Use PGRAB_RDONLY to avoid perturbing the target PID */
   pshandle = Pgrab(pid_of_interest, PGRAB_RDONLY, &perr);
 
   if (pshandle == NULL) {
@@ -59,7 +59,7 @@ int
 function_iter(void *function_count, const GElf_Sym *sym, const char *sym_name)
 {
   if (sym_name != NULL) {
-    /* printf("\t%s\n",sym_name); */
+    printf("\t%32s %llu %llu\n", sym_name, sym->st_value, sym->st_size);
     (*((long *)function_count))++;
   } else {
     printf("\tNULL FUNCNAME\n");
