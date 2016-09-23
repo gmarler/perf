@@ -83,7 +83,7 @@ function_iter(void *callback_arg, const GElf_Sym *sym, const char *sym_name)
   data_t procfile_data = (*((data_t *)callback_arg));
 
   if (sym_name != NULL) {
-    printf("\t%32s %llu %llu\n", sym_name, sym->st_value, sym->st_size);
+    printf("%-32s %llu %llu\n", sym_name, sym->st_value, sym->st_size);
     (((data_t *)callback_arg)->function_count)++;
   } else {
     printf("\tNULL FUNCNAME\n");

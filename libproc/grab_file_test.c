@@ -25,7 +25,7 @@ int main(int argc, char **argv)
 
   if (argc == 2) {
     pid_of_interest = atoi(argv[1]);
-    printf("You want to examine PID: %u\n",pid_of_interest);
+    /* printf("You want to examine PID: %u\n",pid_of_interest); */
   } else {
     printf("Must specify PID\n");
     exit(1);
@@ -54,7 +54,7 @@ proc_object_iter(void *callback_arg, const prmap_t *pmp, const char *object_name
   int                   perr;
 
 
-  printf("proc_object_iter: %-120s\n", object_name);
+  printf("FILENAME: %s\n", object_name);
   /* For each object name, grab the file, then iterate over the objects,
    * extracting their symbol tables */
   if ((file_pshandle = Pgrab_file(object_name, &perr)) == NULL) {
@@ -72,7 +72,7 @@ proc_object_iter(void *callback_arg, const prmap_t *pmp, const char *object_name
                function_iter,
                (void *)&procfile_data);
 
-  printf("FUNCTION COUNT: %ld\n", procfile_data.function_count);
+  /* printf("FUNCTION COUNT: %ld\n", procfile_data.function_count); */
 
   return 0;
 }
@@ -85,11 +85,11 @@ function_iter(void *callback_arg, const GElf_Sym *sym, const char *sym_name)
   data_t procfile_data = (*((data_t *)callback_arg));
 
   if (sym_name != NULL) {
-    printf("\t%32s %llu %llu\n", sym_name, sym->st_value, sym->st_size);
+    printf("%-32s %llu %llu\n", sym_name, sym->st_value, sym->st_size);
     (((data_t *)callback_arg)->function_count)++;
-  } else {
-    printf("\tNULL FUNCNAME\n");
-  }
+  } /* else {
+    printf("NULL FUNCNAME\n");
+  } */
   return 0;
 }
 
