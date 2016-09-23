@@ -1,0 +1,21 @@
+#!/usr/bin/env perl
+
+use v5.22;
+use warnings;
+use strict;
+
+use Data::Dumper;
+use ELF::Extract::Sections;
+
+use Log::Log4perl qw( :easy );
+#Log::Log4perl->easy_init($DEBUG);
+ 
+# Create an extractor object for foo.so
+my $extractor = ELF::Extract::Sections->new( file => '/usr/bin/ksh' );
+ 
+# Scan file for section data, returns a hash
+my $sections_href  = $extractor->sections;
+
+#say join "\n", keys %sections;
+
+say Dumper( keys %{$sections_href} );
