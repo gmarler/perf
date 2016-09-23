@@ -1,0 +1,94 @@
+#!/usr/bin/env perl
+
+use v5.22;
+use warnings;
+use strict;
+
+use IPC::System::Simple qw( capture );
+use Math::BigInt;
+
+our $ELFDUMP = "/usr/bin/elfdump";
+
+# Will normally be passed a list of PIDs or a list of binaries
+# PIDs and executables (a.outs) must be handled differently
+#
+# - A PID will immediately get all of the dynamic objects and their symbols
+#
+# - Reading the symbol table from an a.out will only show the a.out object's
+#   symbol table.  You must manually use ldd to extract all the library names
+#   and then extract those symbol tables independently.
+
+my @files = ( "/usr/bin/ksh", "/usr/bin/basename", "/usr/lib/libc.so.1",
+              "/usr/lib/libijs.a" );
+
+foreach my $file (@files) {
+  my $elf_type = elf_type($file);
+  if ($elf_type eq "ET_EXEC") {
+    exec_symbol_tuples($file);
+  } elsif ($elf_type eq "ET_DYN") {
+    dyn_symbol_tuples($file);
+  } else {
+    say "[$file] is ELF Type $elf_type: SKIPPING";
+  }
+}
+
+# Grab ELF Type:
+# - ET_EXEC for a.out
+# - ET_DYN  for dynamic library
+# Ignore all else
+sub elf_type {
+  my ($file) = shift;
+
+  my $out = capture($ELFDUMP, "-e", $file);
+
+  #say $out;
+  $out =~ m/^ \s+ e_type: \s+ (?<elf_type>[^\n]+)/smx;
+
+  my $elf_type = $+{elf_type};
+
+  say "[$file] ELF Type: $elf_type";
+
+  return $elf_type;
+}
+
+# Get list of symbol tuples from a given file, properly offset
+sub exec_symbol_tuples {
+  my ($file) = shift;
+
+  # If the symbol table file map already contains this file, skip it
+  # return if exists($symbols{$file});
+
+  # Extract load address from the ELF file
+  my $load_address = get_exec_load_address($file);
+
+  # Extract symbol table
+}
+
+# Get a.out load address
+sub get_exec_load_address {
+  my ($file) = shift;
+
+  # ASSUMPTION: PT_LOAD is always in program header 3 - verify this below
+  my $out = capture($ELFDUMP, "-p", "-I", "3", $file);
+
+  if ($out =~ m/ p_type: \s+ \[ \s+ PT_LOAD \s+ \]/smx) {
+    # We're all good
+  } else {
+    # SOMETHING IS WRONG
+    say "Section 3 of the PROGRAM HEADER is unexpectedly NOT PT_LOAD";
+    return; # undef
+  }
+  $out =~ m/^ \s+ p_vaddr: \s+ (?<load_address_in_hex>\S+)/smx;
+  say $+{load_address_in_hex};
+  my $load_address = Math::BigInt->new($+{load_address_in_hex});
+
+  say "LOAD ADDRESS:       " . $load_address;
+  say "LOAD ADDRESS (hex): " . $load_address->as_hex();
+  return $load_address;
+}
+
+
+# Get list of dynamic library symbol tuples
+sub dyn_symbol_tuples {
+}
+
