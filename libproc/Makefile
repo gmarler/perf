@@ -1,6 +1,6 @@
 
 extract_symtab_from_exec: extract_symtab_from_exec.c
-	$(CC) -g2 -m64 -o $@ $^ -lproc
+	$(CC) -g2 -m64 -o $@ $^ -lproc -ldemangle
 
 libelftest: libelftest.c
 	$(CC) -g2 -m64 -o $@ $^ -lelf

@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <demangle.h>
 
 #include <procfs.h>
 #include <sys/procfs.h>
@@ -81,9 +82,28 @@ int
 function_iter(void *callback_arg, const GElf_Sym *sym, const char *sym_name)
 {
   data_t procfile_data = (*((data_t *)callback_arg));
+  char   proto_buffer[8192];
 
   if (sym_name != NULL) {
-    printf("%-32s %llu %llu\n", sym_name, sym->st_value, sym->st_size);
+    int demangle_result;
+    cplus_demangle(sym_name, proto_buffer, (size_t)8192);
+    switch (demangle_result) {
+      case 0:
+        printf("%-32s %llu %llu\n", proto_buffer, sym->st_value, sym->st_size);
+        break;
+      case DEMANGLE_ENAME:
+        printf("INVALID MANGLED NAME\n");
+        exit(4);
+        break;
+      case DEMANGLE_ESPACE:
+        printf("Demangle BUFFER TOO SMALL\n");
+        exit(5);
+        break;
+      default:
+        printf("cplus_demangle() failed with unknown error %d\n",demangle_result);
+        exit(6);
+        break;
+    }
     (((data_t *)callback_arg)->function_count)++;
   } else {
     printf("\tNULL FUNCNAME\n");

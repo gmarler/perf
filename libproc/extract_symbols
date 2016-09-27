@@ -69,16 +69,16 @@ sub get_exec_load_address {
   my ($file) = shift;
 
   # ASSUMPTION: PT_LOAD is always in program header 3 - verify this below
-  my $out = capture($ELFDUMP, "-p", "-I", "3", $file);
+  my $out = capture($ELFDUMP, "-p", $file);
 
-  if ($out =~ m/ p_type: \s+ \[ \s+ PT_LOAD \s+ \]/smx) {
+  if ($out =~ m/ \s+ p_vaddr: (?<load_address_in_hex>\S+) \s+ [^\n]+\n
+                 [^\n]+ p_type: \s+ \[ \s+ PT_LOAD \s+ \]/smx) {
     # We're all good
   } else {
     # SOMETHING IS WRONG
-    say "Section 3 of the PROGRAM HEADER is unexpectedly NOT PT_LOAD";
+    say "UNABLE TO FIND FIRST PT_LOAD PROGRAM HEADER";
     return; # undef
   }
-  $out =~ m/^ \s+ p_vaddr: \s+ (?<load_address_in_hex>\S+)/smx;
   say $+{load_address_in_hex};
   my $load_address = Math::BigInt->new($+{load_address_in_hex});
 
