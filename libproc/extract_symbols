@@ -19,7 +19,7 @@ our $ELFDUMP = "/usr/bin/elfdump";
 #   and then extract those symbol tables independently.
 
 my @files = ( "/usr/bin/ksh", "/usr/bin/basename", "/usr/lib/libc.so.1",
-              "/usr/lib/libijs.a" );
+              "/usr/lib/libijs.a", "/bb/bin/lpbig.tsk" );
 
 foreach my $file (@files) {
   my $elf_type = elf_type($file);
@@ -71,7 +71,7 @@ sub get_exec_load_address {
   # ASSUMPTION: PT_LOAD is always in program header 3 - verify this below
   my $out = capture($ELFDUMP, "-p", $file);
 
-  if ($out =~ m/ \s+ p_vaddr: (?<load_address_in_hex>\S+) \s+ [^\n]+\n
+  if ($out =~ m/ \s+ p_vaddr: \s+ (?<load_address_in_hex>\S+) \s+ [^\n]+\n
                  [^\n]+ p_type: \s+ \[ \s+ PT_LOAD \s+ \]/smx) {
     # We're all good
   } else {
