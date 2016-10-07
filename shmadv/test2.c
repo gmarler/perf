@@ -12,7 +12,7 @@
 #include <errno.h>
 
 /* Pick a key for this test */
-static int    SHKEY    = 0x600f;
+static int    SHKEY    = 0x6fff;
 
 /* This shared memory segment will be 63 MB */
 #define SHM_SIZE  6ULL * 1024ULL * 1024ULL * 1024ULL
