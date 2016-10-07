@@ -39,4 +39,26 @@ int main(int argc, char **argv)
     perror("shmat failed");
     exit(2);
   }
+
+  /* Quick and dirty page allocation test */
+  for (j = 0; j < 100; j++) {
+    for (i = 0; i < struct_count; i++) {
+      memcpy(shmaddr  + (i * sizeof(struct_count)),
+             localbuf + (i * sizeof(struct_count)),
+             sizeof(struct_count));
+    }
+  }
+
+  /* Give time for system introspection */
+  sleep(20);
+
+  /*  Detach from segment */
+  if (shmdt(shmaddr) == -1) {
+    perror("SHM detach problem");
+  }
+
+  /* Destroy segment */
+  shmctl(shmid,IPC_RMID,NULL);
+
+  exit(0);
 }
