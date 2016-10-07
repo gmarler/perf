@@ -1,6 +1,7 @@
 /* Here we just do a basic ISM shared memory segment */
 
 #include <stdlib.h>
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
@@ -18,7 +19,7 @@ static int    SHKEY    = 0x600f;
 
 static unsigned char *local_buf[SHM_SIZE];
 static unsigned char *mystruct[4];
-static unsigned long  struct_count = (SHM_SIZE / sizeof(my_struct));
+static unsigned long  struct_count = (SHM_SIZE / sizeof(mystruct));
 
 
 int main(int argc, char **argv)
@@ -43,8 +44,8 @@ int main(int argc, char **argv)
   /* Quick and dirty page allocation test */
   for (j = 0; j < 100; j++) {
     for (i = 0; i < struct_count; i++) {
-      memcpy(shmaddr  + (i * sizeof(struct_count)),
-             localbuf + (i * sizeof(struct_count)),
+      memcpy(shmaddr   + (i * sizeof(struct_count)),
+             local_buf + (i * sizeof(struct_count)),
              sizeof(struct_count));
     }
   }
