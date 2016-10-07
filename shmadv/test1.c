@@ -35,5 +35,8 @@ int main(int argc, char **argv)
   }
 
   /* Attach as an ISM Shared Memory Segment */
-  shmaddr = shmat();
+  if ((shmaddr = shmat(shmid,NULL,SHM_SHARE_MMU)) == -1) {
+    perror("shmat failed");
+    exit(2);
+  }
 }
