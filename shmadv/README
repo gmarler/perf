@@ -1,0 +1,6 @@
+This evaluation has to do with ISM shared memory segments in Solaris spanning
+more than one Locality Group when you wish them to only exist in the single
+Locality Group where a single threaded process resides.
+
+Looks like you need to use the shmadv() function for this, so that's what we're
+trying.
