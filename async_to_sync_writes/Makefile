@@ -7,6 +7,9 @@ CXXFLAGS = -m64 -g3 -xO3 -std=c++11
 test1: test1.c
 	$(CC) $(CFLAGS) -o $@ $<
 
+test1_close_then_rename: test1_close_then_rename.c
+	$(CC) $(CFLAGS) -o $@ $<
+
 aio_signal_test: aio_signal_test.cc
 	$(CXX) $(CXXFLAGS) -o $@ $<
 
@@ -17,4 +20,4 @@ aio_suspend_test: aio_suspend_test.cc
 	$(CXX) $(CXXFLAGS) -o $@ $<
 
 clean:
-	@rm test1 aio_signal_test aio_portevent_test aio_suspend_test
+	@rm test1 test1_close_then_rename aio_signal_test aio_portevent_test aio_suspend_test
