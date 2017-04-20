@@ -20,8 +20,8 @@ int
 main(int argc, char **argv)
 {
   int i;
-  const char filename[] = "/perfwork/bogus-file";
-  const char filename[] = "/perfwork/bogus-file.done";
+  const char filename[]     = "/perfwork/bogus-file";
+  const char filename_new[] = "/perfwork/bogus-file.done";
   char buffers[BUFFERS][BUFSIZE];
   long buffer_number;
   char *buffer;
