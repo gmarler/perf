@@ -22,5 +22,8 @@ aio_portevent_test: aio_portevent_test.cc
 aio_suspend_test: aio_suspend_test.cc
 	$(CXX) $(CXXFLAGS) -o $@ $<
 
+aio_listio_test: aio_listio_test.cc
+	$(CXX) $(CXXFLAGS) -o $@ $<
+
 clean:
-	@rm test1 test1_close_then_rename test1_close_then_fsync_dir aio_signal_test aio_portevent_test aio_suspend_test
+	@rm test1 test1_close_then_rename test1_close_then_fsync_dir aio_signal_test aio_portevent_test aio_suspend_test aio_listio_test
