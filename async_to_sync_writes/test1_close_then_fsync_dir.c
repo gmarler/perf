@@ -1,5 +1,6 @@
 /*
- * Test how a large number of 8KB async writes, close() it, then rename() it.
+ * Test how a large number of 8KB async writes, close() it, then fsync() the
+ * directory it resides in
  * */
 
 #include <stdio.h>
@@ -21,7 +22,7 @@ main(int argc, char **argv)
 {
   int i;
   const char filename[]     = "/perfwork/bogus-file";
-  const char filename_new[] = "/perfwork/bogus-file.done";
+  const char dirname[]      = "/perfwork";
   char buffers[BUFFERS][BUFSIZE];
   long buffer_number;
   char *buffer;
@@ -55,7 +56,14 @@ main(int argc, char **argv)
     write(fd, buffers[buffer_number], BUFSIZE);
   }
   close(fd);
-  rename(filename,filename_new);
+
+  int fddir = open(filename, O_CLOEXEC, 0755);
+  if (fddir == NULL) {
+    perror("Unable to open directory");
+    exit(1);
+  }
+
+  fdatasync(fddir);
 }
 
 // Assumes 0 <= max <= RAND_MAX

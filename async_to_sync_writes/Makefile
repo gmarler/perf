@@ -10,6 +10,9 @@ test1: test1.c
 test1_close_then_rename: test1_close_then_rename.c
 	$(CC) $(CFLAGS) -o $@ $<
 
+test1_close_then_fsync_dir: test1_close_then_fsync_dir.c
+	$(CC) $(CFLAGS) -o $@ $<
+
 aio_signal_test: aio_signal_test.cc
 	$(CXX) $(CXXFLAGS) -o $@ $<
 
@@ -20,4 +23,4 @@ aio_suspend_test: aio_suspend_test.cc
 	$(CXX) $(CXXFLAGS) -o $@ $<
 
 clean:
-	@rm test1 test1_close_then_rename aio_signal_test aio_portevent_test aio_suspend_test
+	@rm test1 test1_close_then_rename test1_close_then_fsync_dir aio_signal_test aio_portevent_test aio_suspend_test
