@@ -12,22 +12,9 @@
  *  Whether I/O is synchronized or non-synchronized (default)
  ******************************************************************************/
 
-enum test_type { Test_pwrite, Test_aio_write, Test_lio_listio };
 
-#ifndef _OPTIONS_H_
-#define _OPTIONS_H_
-#include <stdio.h>
-#include <stdlib.h>
-#include <getopt.h>
-
-void usage(char **argv);
-int
-collect_options(char **argv, char *filepath, long long *filesize,
-                long long *blocksize,
-                enum test_type *test, int *sync_type);
-
-#endif /* _OPTIONS_H_ */
-
+#include "test_type.h"
+#include "options.h"
 
 int
 collect_options(char **argv, char *filepath, long long *filesize,
