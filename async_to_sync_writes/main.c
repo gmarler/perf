@@ -11,6 +11,6 @@ int main(int argc, char **argv)
   enum test_type  test;
   int             sync_type;
 
-  collect_options(argv, &filepath, &filesize, &blocksize, &test, &sync_type);
+  collect_options(&argc, argv, &filepath, &filesize, &blocksize, &test, &sync_type);
 
 }

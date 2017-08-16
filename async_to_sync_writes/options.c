@@ -17,10 +17,12 @@
 #include "options.h"
 
 int
-collect_options(char **argv, char *filepath, long long *filesize,
+collect_options(int *argc, char **argv, char *filepath,
+                long long *filesize,
                 long long *blocksize,
                 enum test_type *test, int *sync_type)
 {
+  int c;
   static struct option long_options[] =
   {
     {"filepath",  required_argument, 0, 'f'},
@@ -30,6 +32,19 @@ collect_options(char **argv, char *filepath, long long *filesize,
     {"sync_type", required_argument, 0, 'y'},
     {0,                           0, 0,   0}
   };
+
+  int option_index = 0;
+  c = getopt_long(*argc, argv, "f:s:b:t:y:",
+                  long_options, &option_index);
+
+  /*  Detect the end of the options. */
+  if (c == -1)
+    break;
+
+  switch (c)
+  {
+  }
+
 }
 
 void usage(char **argv)
