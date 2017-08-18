@@ -1,1 +1,1 @@
-Run test while running iostat -Td -xnZC 1
+Run test while running iostat -Td -xnzC 1 | egrep '(c0$)'

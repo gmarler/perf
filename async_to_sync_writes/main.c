@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <limits.h>
+#include <time.h>
 #include "test_type.h"
 #include "options.h"
 #include "buffer_initialize.h"
@@ -14,8 +15,11 @@ int main(int argc, char **argv)
   long long       filesize;
   long long       blocksize;
   enum test_type  test;
-  int             sync_type;
+  int             sync_type = 0;
   char           *buffers;
+  time_t          t;
+  struct tm      *tm;
+  char            timestamp[64];
 
   collect_options(&argc, argv, filepath, &filesize, &blocksize, &test, &sync_type);
 
@@ -34,5 +38,31 @@ int main(int argc, char **argv)
   buffer_initialize(buffers, BUFFER_COUNT, blocksize);
 
   /* Open file to write to with proper flags */
+  /* Opening "synchronized" (O_DSYNC), and O_APPEND, so we don't have to specify
+     the offset in the aio control block */
+  int open_flags = O_RDWR | O_CREAT | O_APPEND | sync_type;
+  int fd = open(filepath, open_flags, 0755);
+  if (fd == NULL) {
+    perror("Unable to open file");
+    exit(1);
+  }
+
   /* Initiate the write test activity */
+  t = time(NULL);
+  tm = localtime(&t);
+  strftime(timestamp, sizeof(timestamp), "%c", tm);
+  printf("Writing begins at: %s\n",timestamp);
+  if (test == Test_pwrite) {
+    /*  pwrite_test(fd, filesize, blocksize); */
+  } else if (test == Test_aio_write) {
+
+  } else if (test == Test_lio_listio) {
+
+  }
+
+  /* Rename file */
+  t = time(NULL);
+  tm = localtime(&t);
+  strftime(timestamp, sizeof(timestamp), "%c", tm);
+  printf(" Renaming file at: %s\n",timestamp);
 }
