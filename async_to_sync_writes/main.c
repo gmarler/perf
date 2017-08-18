@@ -2,6 +2,11 @@
 #include <limits.h>
 #include "test_type.h"
 #include "options.h"
+#include "buffer_initialize.h"
+
+/* the number of buffers filled with random data, which we choose from randomly
+ * to write the destination file */
+#define BUFFERS  20
 
 int main(int argc, char **argv)
 {
@@ -10,6 +15,7 @@ int main(int argc, char **argv)
   long long       blocksize;
   enum test_type  test;
   int             sync_type;
+  char           *buffers;
 
   collect_options(&argc, argv, filepath, &filesize, &blocksize, &test, &sync_type);
 
@@ -23,4 +29,10 @@ int main(int argc, char **argv)
          sync_type & O_SYNC ? "O_SYNC" :
          sync_type & O_DSYNC ? "O_DSYNC" :
          "No Synchronization");
+
+  /* Fill buffers with random data */
+  buffer_initialize(buffers, BUFFERS, blocksize);
+
+  /* Open file to write to with proper flags */
+  /* Initiate the write test activity */
 }
