@@ -79,6 +79,7 @@ collect_options(int *argc, char **argv, char *filepath,
         }
         break;
       default:
+        usage(argv);
         abort();
     }
   }
