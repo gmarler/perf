@@ -6,7 +6,7 @@
 
 /* the number of buffers filled with random data, which we choose from randomly
  * to write the destination file */
-#define BUFFERS  20
+#define BUFFER_COUNT  20
 
 int main(int argc, char **argv)
 {
@@ -31,7 +31,7 @@ int main(int argc, char **argv)
          "No Synchronization");
 
   /* Fill buffers with random data */
-  buffer_initialize(buffers, BUFFERS, blocksize);
+  buffer_initialize(buffers, BUFFER_COUNT, blocksize);
 
   /* Open file to write to with proper flags */
   /* Initiate the write test activity */
