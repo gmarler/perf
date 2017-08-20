@@ -25,7 +25,7 @@ aio_suspend_test: aio_suspend_test.cc
 aio_listio_test: aio_listio_test.cc
 	$(CXX) $(CXXFLAGS) -o $@ $<
 
-test: main.o options.o buffer_initialize.o
+test: main.o options.o buffer_initialize.o pwrite_test.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 clean:

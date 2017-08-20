@@ -4,6 +4,7 @@
 #include "test_type.h"
 #include "options.h"
 #include "buffer_initialize.h"
+#include "pwrite_test.h"
 
 /* the number of buffers filled with random data, which we choose from randomly
  * to write the destination file */
@@ -36,6 +37,7 @@ int main(int argc, char **argv)
 
   /* Fill buffers with random data */
   buffer_initialize(buffers, BUFFER_COUNT, blocksize);
+  printf("INITIALIZED BUFFER BASE ADDRESS: %lld\n",buffers);
 
   /* Open file to write to with proper flags */
   /* Opening "synchronized" (O_DSYNC), and O_APPEND, so we don't have to specify
@@ -51,9 +53,9 @@ int main(int argc, char **argv)
   t = time(NULL);
   tm = localtime(&t);
   strftime(timestamp, sizeof(timestamp), "%c", tm);
-  printf("Writing begins at: %s\n",timestamp);
+  printf("    Writing begins at: %s\n",timestamp);
   if (test == Test_pwrite) {
-    /*  pwrite_test(fd, filesize, blocksize); */
+    pwrite_test(fd, filesize, blocksize, buffers, BUFFER_COUNT);
   } else if (test == Test_aio_write) {
 
   } else if (test == Test_lio_listio) {
@@ -64,5 +66,10 @@ int main(int argc, char **argv)
   t = time(NULL);
   tm = localtime(&t);
   strftime(timestamp, sizeof(timestamp), "%c", tm);
-  printf(" Renaming file at: %s\n",timestamp);
+  printf("     Renaming file at: %s\n",timestamp);
+
+  t = time(NULL);
+  tm = localtime(&t);
+  strftime(timestamp, sizeof(timestamp), "%c", tm);
+  printf(" Renaming complete at: %s\n",timestamp);
 }
