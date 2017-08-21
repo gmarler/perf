@@ -36,7 +36,7 @@ int main(int argc, char **argv)
          "No Synchronization");
 
   /* Fill buffers with random data */
-  buffer_initialize(buffers, BUFFER_COUNT, blocksize);
+  buffer_initialize(&buffers, BUFFER_COUNT, blocksize);
   printf("INITIALIZED BUFFER BASE ADDRESS: %lld\n",buffers);
 
   /* Open file to write to with proper flags */
