@@ -66,7 +66,7 @@ int main(int argc, char **argv)
   } else if (test == Test_aio_write) {
 
   } else if (test == Test_lio_listio) {
-
+    lio_listio_test(fd, filesize, blocksize, buffers, BUFFER_COUNT);
   }
 
   /* Rename file */
