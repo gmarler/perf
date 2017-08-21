@@ -48,7 +48,7 @@ void lio_listio_test(int fd, long long filesize, long long blocksize,
       control_block->aio_fildes                = fd;
       control_block->aio_offset                = 0;
       /* Notify via signal */
-      control_block->aio_sigevent.sigev_notify = SIGEV_NONE;
+      control_block->aio_sigevent.sigev_notify = SIGEV_SIGNAL;
       control_block->aio_nbytes                = blocksize;
       control_block->aio_buf                   = buffers + (buffer_number * blocksize);
       control_block->aio_reqprio               = 0;
