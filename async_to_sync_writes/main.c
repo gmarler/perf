@@ -13,6 +13,8 @@
 int main(int argc, char **argv)
 {
   char            filepath[PATH_MAX];
+  char           *filepath_renamed;
+  char            filepath_suffix[] = ".done";
   long long       filesize;
   long long       blocksize;
   enum test_type  test;
@@ -34,6 +36,11 @@ int main(int argc, char **argv)
          sync_type & O_SYNC ? "O_SYNC" :
          sync_type & O_DSYNC ? "O_DSYNC" :
          "No Synchronization");
+
+  /* Set up the renamed file name */
+  filepath_renamed = malloc(sizeof(filepath) + sizeof(filepath_suffix));
+  strcat(filepath_renamed,filepath);
+  strcat(filepath_renamed,filepath_suffix);
 
   /* Fill buffers with random data */
   buffer_initialize(&buffers, BUFFER_COUNT, blocksize);
@@ -66,10 +73,12 @@ int main(int argc, char **argv)
   t = time(NULL);
   tm = localtime(&t);
   strftime(timestamp, sizeof(timestamp), "%c", tm);
-  printf("     Renaming file at: %s\n",timestamp);
-
+  printf("     Renaming file %s to %s at: %s\n",filepath,filepath_renamed,
+                                                timestamp);
+  rename(filepath,filepath_renamed);
   t = time(NULL);
   tm = localtime(&t);
   strftime(timestamp, sizeof(timestamp), "%c", tm);
   printf(" Renaming complete at: %s\n",timestamp);
+  unlink(filepath_renamed);
 }
