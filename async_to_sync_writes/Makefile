@@ -1,7 +1,7 @@
 CC  = /opt/solarisstudio12.4/bin/cc
 CXX = /opt/solarisstudio12.4/bin/CC
 
-CFLAGS   = -m64 -g3 -xO3
+CFLAGS   = -m64 -g3 -xO3 -xlang=c99
 CXXFLAGS = -m64 -g3 -xO3 -std=c++11
 
 test1: test1.c
@@ -25,7 +25,7 @@ aio_suspend_test: aio_suspend_test.cc
 aio_listio_test: aio_listio_test.cc
 	$(CXX) $(CXXFLAGS) -o $@ $<
 
-test: main.o options.o buffer_initialize.o pwrite_test.o
+test: main.o options.o buffer_initialize.o pwrite_test.o lio_listio_test.o
 	$(CC) $(CFLAGS) -o $@ $^
 
 clean:
