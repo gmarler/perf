@@ -1,7 +1,7 @@
 CC  = /opt/solarisstudio12.4/bin/cc
 CXX = /opt/solarisstudio12.4/bin/CC
 
-CFLAGS   = -m64 -g3 -xO3 -xlang=c99
+CFLAGS   = -m64 -g3 -xO3 -xlang=c99 -D_XOPEN_SOURCE=600
 CXXFLAGS = -m64 -g3 -xO3 -std=c++11
 
 test1: test1.c

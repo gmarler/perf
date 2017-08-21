@@ -6,8 +6,7 @@ void lio_listio_test(int fd, long long filesize, long long blocksize,
   unsigned long      iterations = filesize / blocksize;
   long               buffer_number;
   char              *buffer;
-  aiocb_t           *control_block;
-  aiocb_t            control_blocks[];
+  struct aiocb      *control_block;
   long               aio_listio_max;
   sigset_t           set;
   struct sigaction   act;
@@ -18,6 +17,9 @@ void lio_listio_test(int fd, long long filesize, long long blocksize,
   aio_listio_max = sysconf(_SC_AIO_LISTIO_MAX);
   printf("On this platform, AIO_LISTIO_MAX = [%ld]\n",aio_listio_max);
   printf("Max outstanding AIO I/Os: [%ld]\n",sysconf(_SC_AIO_MAX));
+
+  /* don't know how long to make the array until you determine aio_listio_max */
+  struct aiocb      *control_blocks[aio_listio_max];
 
   /* Disable reception of MYSIG_AIO_COMPLETE/MYSIG_STOP in the main thread */
   sigemptyset(&set);
@@ -43,7 +45,7 @@ void lio_listio_test(int fd, long long filesize, long long blocksize,
       /* buffer_number                         = random_at_most(BUFFERS - 1); */
       buffer_number                            = ( rand() % buffer_count );
 
-      control_block                            = (aiocb_t *)malloc(sizeof(aiocb_t));
+      control_block                            = (struct aiocb *)malloc(sizeof(struct aiocb));
 
       control_block->aio_fildes                = fd;
       control_block->aio_offset                = 0;
