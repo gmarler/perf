@@ -6,11 +6,12 @@
 #include "options.h"
 #include "buffer_initialize.h"
 #include "pwrite_test.h"
+#include "aio_write_test.h"
 #include "lio_listio_test.h"
 
 /* the number of buffers filled with random data, which we choose from randomly
  * to write the destination file */
-#define BUFFER_COUNT  20
+#define BUFFER_COUNT  200
 
 int main(int argc, char **argv)
 {
@@ -68,7 +69,7 @@ int main(int argc, char **argv)
   if (test == Test_pwrite) {
     pwrite_test(fd, filesize, blocksize, buffers, BUFFER_COUNT);
   } else if (test == Test_aio_write) {
-
+    aio_write_test(fd, filesize, blocksize, buffers, BUFFER_COUNT);
   } else if (test == Test_lio_listio) {
     lio_listio_test(fd, filesize, blocksize, buffers, BUFFER_COUNT);
   }
