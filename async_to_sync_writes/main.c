@@ -2,6 +2,7 @@
 #include <limits.h>
 #include <time.h>
 #include <unistd.h>
+#include "my_signals.h"
 #include "test_type.h"
 #include "options.h"
 #include "buffer_initialize.h"

@@ -1,5 +1,5 @@
-#ifndef LIO_LISTIO_TEST_H
-#define LIO_LISTIO_TEST_H
+#ifndef AIO_WRITE_TEST_H
+#define AIO_WRITE_TEST_H
 
 #include <aio.h>
 #include <stdlib.h>
@@ -14,10 +14,10 @@
 #include <stdbool.h>
 #include "my_signals.h"
 
-void lio_listio_test(int fd, long long filesize, long long blocksize,
-                     char *buffers, int buffer_count);
+void aio_write_test(int fd, long long filesize, long long blocksize,
+                    char *buffers, int buffer_count);
 
 static void *sig_thread(void *arg);
 static void  io_completion_handler();
 
-#endif /* LIO_LISTIO_TEST_H */
+#endif /* AIO_WRITE_TEST_H */
