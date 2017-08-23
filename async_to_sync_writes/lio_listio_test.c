@@ -74,7 +74,7 @@ void lio_listio_test(int fd, long long filesize, long long blocksize,
     /* control_blocks.clear(); */
     for (int i = 0;  i < aio_listio_max; i++) {
       /* TODO: Can't we just reuse the aiocbs?  */
-      free(buffers + (i * blocksize));
+      free(control_blocks[i]);
     }
   }
 
