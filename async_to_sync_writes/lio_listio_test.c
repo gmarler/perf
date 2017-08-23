@@ -11,10 +11,16 @@ void lio_listio_test(int fd, long long filesize, long long blocksize,
   sigset_t           set;
   struct sigaction   act;
   pthread_t          tid;
+  struct sigevent    per_io_list_sigevent;
 
   /* Determine max number AIOs that can be initiated in a single lio_listio()
    * call on the platform */
   aio_listio_max = sysconf(_SC_AIO_LISTIO_MAX);
+  /*
+  if (aio_listio_max > 1024) {
+    aio_listio_max = 1024;
+  }
+  */
   printf("On this platform, AIO_LISTIO_MAX = [%ld]\n",aio_listio_max);
   printf("Max outstanding AIO I/Os: [%ld]\n",sysconf(_SC_AIO_MAX));
 
@@ -25,7 +31,7 @@ void lio_listio_test(int fd, long long filesize, long long blocksize,
   sigemptyset(&set);
   sigaddset(&set,MYSIG_AIO_COMPLETE);
   sigaddset(&set,MYSIG_STOP);
-  pthread_sigmask(SIG_SETMASK, &set, NULL);
+  pthread_sigmask(SIG_BLOCK, &set, NULL);
 
   /* Clear out the sigaction */
   memset(&act,0,sizeof(act));
@@ -34,6 +40,10 @@ void lio_listio_test(int fd, long long filesize, long long blocksize,
 
   /* Start the I/O completion handling thread */
   pthread_create(&tid,NULL,sig_thread,&set);
+
+  per_io_list_sigevent.sigev_notify          = SIGEV_SIGNAL;
+  per_io_list_sigevent.sigev_signo           = MYSIG_AIO_COMPLETE;
+  per_io_list_sigevent.sigev_value.sival_ptr = (void *)&control_blocks;
 
   /* Enable reception of SIGRTMAX/SIGRTMAX-1 in the I/O completion handling
    * thread */
@@ -49,8 +59,9 @@ void lio_listio_test(int fd, long long filesize, long long blocksize,
 
       control_block->aio_fildes                = fd;
       control_block->aio_offset                = 0;
-      /* Notify via signal */
-      control_block->aio_sigevent.sigev_notify = SIGEV_SIGNAL;
+      /* Don't bother signal notification per aiocb, just get one signal when
+       * they're all done */
+      control_block->aio_sigevent.sigev_notify = SIGEV_NONE;
       control_block->aio_nbytes                = blocksize;
       control_block->aio_buf                   = buffers + (buffer_number * blocksize);
       control_block->aio_reqprio               = 0;
@@ -60,10 +71,13 @@ void lio_listio_test(int fd, long long filesize, long long blocksize,
       control_blocks[j]                        = control_block;
     }
 
-    int ret = lio_listio(LIO_WAIT,control_blocks,(int)aio_listio_max,NULL);
+    /*int ret = lio_listio(LIO_WAIT,control_blocks,(int)aio_listio_max,NULL); */
+    int ret = lio_listio(LIO_NOWAIT,control_blocks,(int)aio_listio_max,
+                         &per_io_list_sigevent);
 
-    /* Wait for I/O completion handling thread to assert the condition variable
-     * to continue on */
+    /* When using LIO_NOWAIT above, Wait for I/O completion handling thread to
+     * assert the condition variable to continue on */
+    sleep(2);
 
     if (ret == 0) {
     } else {
@@ -89,13 +103,16 @@ static void io_completion_handler()
 
 static void *sig_thread(void *arg)
 {
-  int       signum;
-  siginfo_t info;
+  int         signum;
+  siginfo_t   info;
+  static long count = 0;
 
   do {
     signum = sigwaitinfo((sigset_t *)arg, &info);
     if (signum == MYSIG_AIO_COMPLETE) {
       /* cast needed: (struct aiocb *)info.si_value.sival_ptr */
+      count++;
+      printf("%ld I/O list completions handled\n",count);
     } else if (signum == MYSIG_STOP) {
       return (void *)true;
     }

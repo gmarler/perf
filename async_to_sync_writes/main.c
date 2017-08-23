@@ -88,5 +88,7 @@ int main(int argc, char **argv)
   tm = localtime(&t);
   strftime(timestamp, sizeof(timestamp), "%c", tm);
   printf(" Renaming complete at: %s\n",timestamp);
+  printf("sleeping 4 seconds after rename and before unlink...\n");
+  sleep(4);
   unlink(filepath_renamed);
 }
