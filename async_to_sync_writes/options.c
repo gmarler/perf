@@ -10,6 +10,9 @@
  *  The way to perform writes - synchronous or asynchronous
  * --sync_type=(O_SYNC|O_DSYNC|<none - async - default)
  *  Whether I/O is synchronized or non-synchronized (default)
+ * --rename_delay=<seconds>  (0 by default)
+ *  How many seconds to wait after writes are complete before file rename is
+ *  done.
  ******************************************************************************/
 
 
@@ -20,24 +23,26 @@ int
 collect_options(int *argc, char **argv, char *filepath,
                 long long *filesize,
                 long long *blocksize,
-                enum test_type *test, int *sync_type)
+                enum test_type *test, int *sync_type,
+                long long *rename_delay)
 {
   char                 *eptr;
   int                   c;
   static struct option  long_options[] =
   {
-    {"filepath",  required_argument, 0, 'f'},
-    {"filesize",  required_argument, 0, 's'},
-    {"blocksize", required_argument, 0, 'b'},
-    {"test",      required_argument, 0, 't'},
-    {"sync_type", required_argument, 0, 'y'},
-    {0,                           0, 0,   0}
+    {"filepath",     required_argument, 0, 'f'},
+    {"filesize",     required_argument, 0, 's'},
+    {"blocksize",    required_argument, 0, 'b'},
+    {"test",         required_argument, 0, 't'},
+    {"sync_type",    required_argument, 0, 'y'},
+    {"rename_delay", required_argument, 0, 'r'},
+    {0,                              0, 0,   0}
   };
 
   while (1)
   {
     int option_index = 0;
-    c = getopt_long(*argc, argv, "f:s:b:t:y:",
+    c = getopt_long(*argc, argv, "f:s:b:t:y:r:",
                     long_options, &option_index);
 
     /*  Detect the end of the options. */
@@ -78,6 +83,10 @@ collect_options(int *argc, char **argv, char *filepath,
           *sync_type = 0;
         }
         break;
+      case 'r':
+        *rename_delay = strtoll(optarg, &eptr, 10);
+        printf("rename will be done %lld seconds late\n", *rename_delay);
+        break;
       default:
         usage(argv);
         abort();
@@ -99,6 +108,8 @@ void usage(char **argv)
   printf("  synchronous or asynchronous write type\n");
   printf("--sync_type=(O_SYNC|O_DSYNC|<none - default>)\n");
   printf("  synchronized or non-synchronized I/Os\n");
+  printf("--rename_delay=<seconds>\n");
+  printf("  delay file rename for <seconds> after I/Os submitted\n");
 
   exit(0);
 }

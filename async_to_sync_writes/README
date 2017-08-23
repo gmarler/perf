@@ -1,1 +1,16 @@
-Run test while running iostat -Td -xnzC 1 | egrep '(c0$)'
+
+Run test while running:
+
+iostat -Td -xnzC 1 |
+  egrep '((^Mon|Tue|Wed|Thu|Fri|Sat|Sun)|(c0$))'
+
+
+Where c0 controller is being used in the case where we have multipathed SAN
+storage under MPxIO control.
+
+Make sure to run tests with and without the log device, if it's available; if
+it's available, you can seperate out the log device I/O like so, where the log
+device is c0t5001517BB28964A2d0 in this example:
+
+iostat -Td -xnzC 1 |
+  egrep '((^Mon|Tue|Wed|Thu|Fri|Sat|Sun)|(c0$)|(c0t5001517BB28964A2d0))'

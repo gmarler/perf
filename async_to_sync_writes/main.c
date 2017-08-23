@@ -1,10 +1,12 @@
 #include <stdio.h>
 #include <limits.h>
 #include <time.h>
+#include <unistd.h>
 #include "test_type.h"
 #include "options.h"
 #include "buffer_initialize.h"
 #include "pwrite_test.h"
+#include "lio_listio_test.h"
 
 /* the number of buffers filled with random data, which we choose from randomly
  * to write the destination file */
@@ -17,6 +19,7 @@ int main(int argc, char **argv)
   char            filepath_suffix[] = ".done";
   long long       filesize;
   long long       blocksize;
+  long long       rename_delay = 0; /* default to 0 */
   enum test_type  test;
   int             sync_type = 0;
   char           *buffers;
@@ -24,7 +27,7 @@ int main(int argc, char **argv)
   struct tm      *tm;
   char            timestamp[64];
 
-  collect_options(&argc, argv, filepath, &filesize, &blocksize, &test, &sync_type);
+  collect_options(&argc, argv, filepath, &filesize, &blocksize, &test, &sync_type,&rename_delay);
 
   printf("Running with following options:\n");
   printf("File to write: %s, File size %lld, I/O Block Size: %lld\n",
@@ -36,6 +39,7 @@ int main(int argc, char **argv)
          sync_type & O_SYNC ? "O_SYNC" :
          sync_type & O_DSYNC ? "O_DSYNC" :
          "No Synchronization");
+  printf("Rename delay after I/Os submitted: %lld seconds\n",rename_delay);
 
   /* Set up the renamed file name */
   filepath_renamed = malloc(sizeof(filepath) + sizeof(filepath_suffix));
@@ -73,6 +77,10 @@ int main(int argc, char **argv)
   t = time(NULL);
   tm = localtime(&t);
   strftime(timestamp, sizeof(timestamp), "%c", tm);
+  if (rename_delay) {
+    printf("Sleeping %lld seconds before rename...\n",rename_delay);
+    sleep(rename_delay);
+  }
   printf("     Renaming file %s to %s at: %s\n",filepath,filepath_renamed,
                                                 timestamp);
   rename(filepath,filepath_renamed);
