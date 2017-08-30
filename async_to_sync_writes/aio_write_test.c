@@ -71,15 +71,14 @@ void aio_write_test(int fd, long long filesize, long long blocksize,
   /* Start the I/O completion handling thread */
   pthread_create(&tid,NULL,sig_thread,&central_global_data);
 
-  /*
-  per_io_list_sigevent.sigev_notify          = SIGEV_SIGNAL;
-  per_io_list_sigevent.sigev_signo           = MYSIG_AIO_COMPLETE;
-  per_io_list_sigevent.sigev_value.sival_ptr = (void *)&control_blocks;
-  */
-
-  /* Enable reception of SIGRTMAX/SIGRTMAX-1 in the I/O completion handling
-   * thread */
   srand(time(NULL));
+
+  /* Initialize list of aiocb structures */
+  /* for now, causes a segfault
+  for (int i = 0; i < max_aios; i++) {
+    control_blocks[i] = (struct aiocb *)malloc(sizeof(struct aiocb));
+  }
+  */
 
   for (int i = 0; i < iterations; i += max_aios) {
     for (int j = 0; j < max_aios; j++) {
@@ -87,6 +86,7 @@ void aio_write_test(int fd, long long filesize, long long blocksize,
       /* buffer_number                         = random_at_most(BUFFERS - 1); */
       buffer_number                            = ( rand() % buffer_count );
 
+      /* control_block                            = control_blocks[j]; */
       control_block                            = (struct aiocb *)malloc(sizeof(struct aiocb));
 
       control_block->aio_fildes                = fd;
@@ -95,11 +95,10 @@ void aio_write_test(int fd, long long filesize, long long blocksize,
        * they're all done */
       control_block->aio_sigevent.sigev_notify = SIGEV_SIGNAL;
       control_block->aio_sigevent.sigev_signo  = MYSIG_AIO_COMPLETE;
+      control_block->aio_sigevent.sigev_value.sival_ptr  = control_block;
       control_block->aio_nbytes                = blocksize;
       control_block->aio_buf                   = buffers + (buffer_number * blocksize);
       control_block->aio_reqprio               = 0;
-
-      control_blocks[j]                        = control_block;
 
       /* Check individual I/O submission (not completion) status here */
       int ret = aio_write(control_block);
@@ -158,6 +157,7 @@ static void io_completion_handler()
 static void *sig_thread(void *arg)
 {
   int            lock_status;
+  int            my_errno;
   int            signum;
   siginfo_t      info;
   global_data_t *global_data = (global_data_t *)arg;
@@ -169,6 +169,16 @@ static void *sig_thread(void *arg)
     if (signum == MYSIG_AIO_COMPLETE) {
       /* cast needed: (global_data_t *)info.si_value.sival_ptr */
       my_aiocb = (struct aiocb *)info.si_value.sival_ptr;
+      if ((my_errno = aio_error(my_aiocb)) != EINPROGRESS) {
+        int my_status = aio_return(my_aiocb);
+        if (my_status >= 0) {
+          /* we can keep going */
+        } else {
+          /* There's a problem, we need to avoid incrementing anything now */
+          perror("aio failed");
+          exit(9);
+        }
+      }
       global_data->ios_completed_per_batch++;
       lock_status = pthread_mutex_lock(&(global_data->mutex));
       if (lock_status != 0) {
