@@ -28,7 +28,6 @@ void aio_write_test(int fd, long long filesize, long long blocksize,
   char              *buffer;
   struct aiocb      *control_block;
   sigset_t           set;
-  struct sigaction   act;
   pthread_t          tid;
   long               max_aios;
   global_data_t      central_global_data;
@@ -50,20 +49,19 @@ void aio_write_test(int fd, long long filesize, long long blocksize,
   /* don't know how long to make the array until you determine max_aios */
   struct aiocb      *control_blocks[max_aios];
 
-  /* Disable reception of MYSIG_AIO_COMPLETE/MYSIG_STOP in the main thread */
+  /* Use the same signal set to:
+   * A. Disable reception of MYSIG_AIO_COMPLETE/MYSIG_STOP in the main thread
+   * B. Enable reception of the same signals in the child thread via sigwaitinfo */
   sigemptyset(&set);
   sigaddset(&set,MYSIG_AIO_COMPLETE);
   sigaddset(&set,MYSIG_STOP);
   pthread_sigmask(SIG_BLOCK, &set, NULL);
+  /* squirrel awway the signal set to be used with sigwaitinfo() in the child
+   * thread */
   central_global_data.set                    = set;
+  /* Note when the signal handling thread can exit - when all I/Os have been
+   * completed. */
   central_global_data.total_aios_to_complete = iterations;
-
-  /* Clear out the sigaction */
-  memset(&act,0,sizeof(act));
-  act.sa_flags = SA_SIGINFO;
-  /* act.sa_sigaction = io_completion_handler; */
-  /* Seperate thread will handle signals instead */
-  act.sa_sigaction = NULL;
 
   /* Start the I/O completion handling thread */
   pthread_create(&tid,NULL,sig_thread,&central_global_data);
