@@ -10,8 +10,10 @@ typedef struct {
    * - If the above not set, this just means the I/O has been handed off to the
    *   kernel, no more
    */
-  long               ios_completed;
-  long               total_aios_to_complete;
+  long               max_aios;
+  long               ios_completed_per_batch;
+  long               total_ios_completed;
+  long               total_ios_needed;
   sigset_t           set;
 } global_data_t;
 
@@ -37,7 +39,9 @@ void aio_write_test(int fd, long long filesize, long long blocksize,
    *          error */
   pthread_mutex_init(&central_global_data.mutex,NULL);
   pthread_cond_init(&central_global_data.condvar,NULL);
-  central_global_data.ios_completed = 0; /* initialize to 0 */
+  central_global_data.ios_completed_per_batch = 0; /* initialize to 0 */
+  central_global_data.total_ios_completed     = 0; /* initialize to 0 */
+  central_global_data.total_ios_needed = iterations;
 
   max_aios = sysconf(_SC_AIO_MAX);
   if (max_aios == -1) {
@@ -58,10 +62,10 @@ void aio_write_test(int fd, long long filesize, long long blocksize,
   pthread_sigmask(SIG_BLOCK, &set, NULL);
   /* squirrel awway the signal set to be used with sigwaitinfo() in the child
    * thread */
-  central_global_data.set                    = set;
+  central_global_data.set      = set;
   /* Note when the signal handling thread can exit - when all I/Os have been
    * completed. */
-  central_global_data.total_aios_to_complete = iterations;
+  central_global_data.max_aios = max_aios;
 
   /* Start the I/O completion handling thread */
   pthread_create(&tid,NULL,sig_thread,&central_global_data);
@@ -140,18 +144,21 @@ static void *sig_thread(void *arg)
     if (signum == MYSIG_AIO_COMPLETE) {
       /* cast needed: (global_data_t *)info.si_value.sival_ptr */
       my_aiocb = (struct aiocb *)info.si_value.sival_ptr;
-      global_data->ios_completed++;
-      printf("%ld aio_write completions handled\n",global_data->ios_completed);
-      if (global_data->ios_completed >= global_data->total_aios_to_complete) {
-        printf("All aio_write() activities completed\n");
-        break;
+      global_data->ios_completed_per_batch++;
+      global_data->total_ios_completed++;
+      if (global_data->ios_completed_per_batch >= global_data->max_aios) {
+        printf("One batch of aio_write() activities completed\n");
+        printf("%ld aio_write completions handled\n",global_data->total_ios_completed);
+        global_data->ios_completed_per_batch = 0; /* reset */
+        pthread_cond_signal(&(global_data->condvar));
       }
+      if (global_data->total_ios_completed >= global_data->total_ios_needed)
+        break;
     } else if (signum == MYSIG_STOP) {
       /* Probably not needed for this scenario anyway */
       return (void *)true;
     }
   } while (signum != -1 || errno == EINTR);
 
-  pthread_cond_signal(&(global_data->condvar));
   return (void *)true;
 }
