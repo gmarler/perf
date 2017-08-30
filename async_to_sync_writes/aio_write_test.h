@@ -18,6 +18,5 @@ void aio_write_test(int fd, long long filesize, long long blocksize,
                     char *buffers, int buffer_count);
 
 static void *sig_thread(void *arg);
-static void  io_completion_handler();
 
 #endif /* AIO_WRITE_TEST_H */

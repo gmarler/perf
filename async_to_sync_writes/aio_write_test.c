@@ -93,17 +93,18 @@ void aio_write_test(int fd, long long filesize, long long blocksize,
       control_block->aio_offset                = 0;
       /* Don't bother signal notification per aiocb, just get one signal when
        * they're all done */
-      control_block->aio_sigevent.sigev_notify = SIGEV_SIGNAL;
-      control_block->aio_sigevent.sigev_signo  = MYSIG_AIO_COMPLETE;
+      control_block->aio_sigevent.sigev_notify           = SIGEV_SIGNAL;
+      control_block->aio_sigevent.sigev_signo            = MYSIG_AIO_COMPLETE;
       control_block->aio_sigevent.sigev_value.sival_ptr  = control_block;
-      control_block->aio_nbytes                = blocksize;
-      control_block->aio_buf                   = buffers + (buffer_number * blocksize);
-      control_block->aio_reqprio               = 0;
+      control_block->aio_nbytes                          = blocksize;
+      control_block->aio_buf                             = buffers +
+                                                           (buffer_number *
+                                                            blocksize);
+      control_block->aio_reqprio                         = 0;
 
       /* Check individual I/O submission (not completion) status here */
       int ret = aio_write(control_block);
-      if (ret == 0) {
-      } else {
+      if (ret != 0) {
         perror("aio_write() initiation FAILED");
         /* return(1); */
       }
@@ -147,11 +148,6 @@ void aio_write_test(int fd, long long filesize, long long blocksize,
 
   /* Join with the I/O handling thread when we're done */
   pthread_join(tid,NULL);
-}
-
-static void io_completion_handler()
-{
-
 }
 
 static void *sig_thread(void *arg)
