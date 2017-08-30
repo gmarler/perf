@@ -25,6 +25,7 @@ typedef struct {
 void aio_write_test(int fd, long long filesize, long long blocksize,
                     char *buffers, int buffer_count)
 {
+  int                lock_status;
   unsigned long      iterations = filesize / blocksize;
   long               buffer_number;
   char              *buffer;
@@ -113,7 +114,30 @@ void aio_write_test(int fd, long long filesize, long long blocksize,
 
     /* Wait for I/O completion handling thread to assert the condition
      * variable to continue on */
-    pthread_cond_wait(&central_global_data.condvar,&central_global_data.mutex);
+    lock_status = pthread_mutex_lock(&central_global_data.mutex);
+    if (lock_status != 0) {
+      perror("Unable to do initial mutex lock");
+      exit(1);
+    }
+    while (central_global_data.total_ios_completed %
+           central_global_data.max_aios == 0) {
+      lock_status = pthread_cond_wait(&central_global_data.condvar,
+                                      &central_global_data.mutex);
+      if (lock_status != 0) {
+        perror("Condition wait failed");
+        exit(2);
+      }
+    }
+
+    if (central_global_data.total_ios_completed %
+        central_global_data.max_aios == 0)
+      printf("I/O batch condition signaled\n");
+
+    lock_status = pthread_mutex_unlock(&central_global_data.mutex);
+    if (lock_status != 0) {
+      perror("Unable to do final mutex unlock");
+      exit(1);
+    }
 
     /* clear control_blocks vector */
     /* control_blocks.clear(); */
@@ -133,6 +157,7 @@ static void io_completion_handler()
 
 static void *sig_thread(void *arg)
 {
+  int            lock_status;
   int            signum;
   siginfo_t      info;
   global_data_t *global_data = (global_data_t *)arg;
@@ -145,12 +170,26 @@ static void *sig_thread(void *arg)
       /* cast needed: (global_data_t *)info.si_value.sival_ptr */
       my_aiocb = (struct aiocb *)info.si_value.sival_ptr;
       global_data->ios_completed_per_batch++;
+      lock_status = pthread_mutex_lock(&(global_data->mutex));
+      if (lock_status != 0) {
+        perror("Unable to lock total_ios_completed");
+        exit(3);
+      }
       global_data->total_ios_completed++;
+      lock_status = pthread_mutex_unlock(&(global_data->mutex));
+      if (lock_status != 0) {
+        perror("Unable to UNLOCK total_ios_completed");
+        exit(4);
+      }
       if (global_data->ios_completed_per_batch >= global_data->max_aios) {
         printf("One batch of aio_write() activities completed\n");
         printf("%ld aio_write completions handled\n",global_data->total_ios_completed);
         global_data->ios_completed_per_batch = 0; /* reset */
-        pthread_cond_signal(&(global_data->condvar));
+        lock_status = pthread_cond_signal(&(global_data->condvar));
+        if (lock_status != 0) {
+          perror("Unable to signal an INTERIM condition");
+          exit(8);
+        }
       }
       if (global_data->total_ios_completed >= global_data->total_ios_needed)
         break;
@@ -159,6 +198,23 @@ static void *sig_thread(void *arg)
       return (void *)true;
     }
   } while (signum != -1 || errno == EINTR);
+
+
+  lock_status = pthread_mutex_lock(&(global_data->mutex));
+  if (lock_status != 0) {
+    perror("Unable to lock total_ios_completed");
+    exit(5);
+  }
+  lock_status = pthread_cond_signal(&(global_data->condvar));
+  if (lock_status != 0) {
+    perror("Unable to signal FINAL condition");
+    exit(7);
+  }
+  lock_status = pthread_mutex_unlock(&(global_data->mutex));
+  if (lock_status != 0) {
+    perror("Unable to UNLOCK total_ios_completed");
+    exit(6);
+  }
 
   return (void *)true;
 }
