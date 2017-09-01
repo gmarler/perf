@@ -14,3 +14,10 @@ device is c0t5001517BB28964A2d0 in this example:
 
 iostat -Td -xnzC 1 |
   egrep '((^Mon|Tue|Wed|Thu|Fri|Sat|Sun)|(c0$)|(c0t5001517BB28964A2d0))'
+
+
+And to calculate the average I/O size per second written out, this can be done:
+
+iostat -Td -xnzC 1 |
+ egrep '((^Mon|Tue|Wed|Thu|Fri|Sat|Sun)|(c0$))' |
+ nawk 'NF==11 && $2 !~ /w\/s/{print; if ($2 > 0) {wiosz = $4 / $2; print "WRITE IO SIZE: ", wiosz;} }{print}'
