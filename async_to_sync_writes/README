@@ -20,4 +20,4 @@ And to calculate the average I/O size per second written out, this can be done:
 
 iostat -Td -xnzC 1 |
  egrep '((^Mon|Tue|Wed|Thu|Fri|Sat|Sun)|(c0$))' |
- nawk 'NF==11 && $2 !~ /w\/s/{print; if ($2 > 0) {wiosz = $4 / $2; print "WRITE IO SIZE: ", wiosz;} }{print}'
+ nawk '{print} NF==11 && $2 !~ /w\/s/{if ($2 > 0) {wiosz = $4 / $2; print "WRITE IO SIZE: ",wiosz," KB";} }'
