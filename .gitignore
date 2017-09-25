@@ -1,3 +1,5 @@
 # Avoid editor temp files
 *.swp
 *.swo
+mwait
+*.o
