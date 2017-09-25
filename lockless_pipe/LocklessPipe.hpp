@@ -1,6 +1,9 @@
 #ifndef PIPE_LOCKLESS_PIPE_BUF_HPP
 #define PIPE_LOCKLESS_PIPE_BUF_HPP
 
+#include "Atom/Atom.hh"
+#include "InterruptedInterface.hh"
+
 #include <cerrno>                         // To get ETIMEDOUT
 #include <cstring>
 #include <exception>
