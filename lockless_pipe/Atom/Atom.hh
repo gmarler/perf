@@ -3,4 +3,6 @@
 
 #include "Utility.h"
 
+namespace Atomic = Atom_Private;
+
 #endif /* ATOM_ATOM_HH */
