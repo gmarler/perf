@@ -538,7 +538,193 @@ namespace Pipe {
               }
           }
       }
-}
+  }
+
+  template<class Data, uint32_t PIPE_SIZE, class WakeupPolicy>
+  inline
+  bool LocklessPipe<Data, PIPE_SIZE, WakeupPolicy>::isFull(uint32_t length) const NO_THROW
+  {
+    //in a simpler way- we could increment the writeVPtr_ and then check
+    //isFull = (incrementedVersionedWritePtr >= readVPtr_)
+
+    //however we may want to decrease the # of bits allocated to the version # in the future, which
+    //will cause the version # to potentially wrap, so i will leave this.
+
+    bool result = true;
+
+    uint32_t localReadPtr  = getPointer(readVPtr_);
+    uint32_t localWritePtr = getPointer(writeVPtr_);
+    if (localReadPtr > localWritePtr)
+    {
+      if ((localWritePtr + (length + static_cast<uint32_t>(sizeof(length)))) < localReadPtr)
+      {
+          result = false;
+      }
+    }
+    else // if (localReadPtr <= localWritePtr)
+    {
+      if (isWrap(static_cast<uint32_t>(sizeof(length)), localWritePtr))
+      {
+        if (length + static_cast<uint32_t>(sizeof(length)) < localReadPtr)
+        {
+            result = false;
+        }
+      }
+      else
+      {
+        uint32_t tempIndex;
+        tempIndex = localWritePtr + static_cast<uint32_t>(sizeof(length));
+        if (isWrap(length, tempIndex))
+        {
+          if (length < localReadPtr)
+          {
+              result = false;
+          }
+        }
+        else
+        {
+          result = false;
+        }
+      }
+    }
+    return result;
+  }
+
+  template<class Data, uint32_t PIPE_SIZE, class WakeupPolicy>
+  inline
+  bool LocklessPipe<Data, PIPE_SIZE, WakeupPolicy>::validate(bool print) const NO_THROW
+  {
+    bool valid = true;
+
+    const uint64_t numRead = numRead_;
+    const uint64_t numWritten = numWritten_;
+
+    if (numRead > numWritten)
+    {
+      if (print)
+      {
+        std::cerr << "LocklessPipe Error: NumWritten/NumRead out of synch:"
+                  << " Num Read: " << numRead << " Num Written: " << numWritten << "\n";
+      }
+      valid = false;
+    }
+
+    VersionedPointerType readVPtr = readVPtr_;
+    VersionedPointerType writeVPtr = writeVPtr_;
+
+    if (getVersion(writeVPtr) - getVersion(readVPtr) > 1)
+    {
+      if (print)
+      {
+        std::cerr << "LocklessPipe Error: Versions out of synch:"
+                  << " Write Version: " << getVersion(writeVPtr) << " Read Version: " << getVersion(readVPtr) << "\n";
+      }
+      valid = false;
+    }
+
+    if (getPointer(writeVPtr) > PIPE_SIZE)
+    {
+      if (print)
+      {
+        std::cerr << "LocklessPipe Error: WritePtr out of bounds: " << writeVPtr << "\n";
+      }
+      valid = false;
+    }
+
+    if (getPointer(readVPtr) > PIPE_SIZE)
+    {
+      if (print)
+      {
+        std::cerr << "LocklessPipe Error: ReadPtr out of bounds: " << readVPtr << "\n";
+      }
+      valid = false;
+    }
+
+    if (getPointer(writeVPtr) == getPointer(readVPtr) && getVersion(writeVPtr) != getVersion(readVPtr))
+    {
+      if (print)
+      {
+        std::cerr << "LocklessPipe Error: Corrupt state:"
+                  << " Write Version " << getVersion(writeVPtr) << " Write Pointer " << getPointer(writeVPtr)
+                  << " Read Version " << getVersion(readVPtr) << " Read Pointer " << getPointer(readVPtr) << "\n";
+      }
+      valid = false;
+    }
+
+    if (stomp1 != STOMP || stomp2 != STOMP || stomp3 != STOMP || stomp4 != STOMP)
+    {
+      if (print)
+      {
+        StreamGuard guard(std::cerr);
+
+        std::cerr << "LocklessPipe Error: Stomp variables have been corrupted: "
+                  << std::hex << stomp1 << " : " << stomp2 << " : " << stomp3 << " : " << stomp4 << "\n";
+      }
+      valid = false;
+    }
+
+    if (print && !valid)
+    {
+      std::cerr << *this << std::endl;
+    }
+
+    return valid;
+  }
+
+  template<class Data, uint32_t PIPE_SIZE, class WakeupPolicy>
+  inline
+  std::ostream& LocklessPipe<Data, PIPE_SIZE, WakeupPolicy>::print(std::ostream& os) const
+  {
+    StreamGuard sg(os);
+    const VersionedPointerType rptr = readVPtr_;
+    const VersionedPointerType wptr = writeVPtr_;
+
+    os << "\tNumber of items in pipe     " << count() << "\n"
+       << "\tPercent full                " << percentFull() << "\n"
+       << "\tPipe size (in bytes)        " << PIPE_SIZE << "\n"
+
+       << "\tWriting to location         "
+       << "(" << std::setw(8) << getVersion(wptr) << ", " << std::setw(8) << getPointer(wptr) << ")\n"
+
+       << "\tReading from location       "
+       << "(" << std::setw(8) << getVersion(rptr) << ", " << std::setw(8) << getPointer(rptr) << ")\n"
+
+       << "\tNext write location         "
+       << "(" << std::setw(8) << getVersion(nextWriteVPtr_) << ", " << std::setw(8) << getPointer(nextWriteVPtr_) << ")\n"
+
+       << "\tNum Written                 " << numWritten_ << "\n"
+       << "\tNum Read                    " << numRead_ << "\n"
+       << "\tNum Failed Writes           " << numFailedWrites_ << "\n"
+       << "\tPipe Writer is running      " << std::boolalpha << isWriterRunning_ << "\n"
+       << "\tPipe Reader is running      " << std::boolalpha << isReaderRunning_ << "\n"
+       << "\tWakeup Policy               " << wakeupPolicy_;
+
+    return os;
+  }
+
+
+  template<class Data, uint32_t PIPE_SIZE, class WakeupPolicy>
+  inline
+  std::ostream& operator<<(std::ostream& os, const LocklessPipe<Data, PIPE_SIZE, WakeupPolicy>& pipe)
+  {
+    return pipe.print(os);
+  }
+
+  /*
+   * No wakeup policy.  This policy allows the reader to simply sleep when the
+   * pipe is empty.  No wakeups are required by the writer and so the wakeut1p
+   * method is a nop.  The wait method will return false positives.
+   */
+  class NoWakeupPolicy
+  {
+    enum { SLEEP_ON_BLOCK_USECS = 10 };
+
+    public:
+      friend std::ostream& operator<<(std::ostream& os, const NoWakeupPolicy& /*policy*/)
+      {
+        return os << "No Wakeup Policy";
+      }
+  };
 
 } // Pipe
 
