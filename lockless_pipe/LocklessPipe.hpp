@@ -430,7 +430,7 @@ namespace Pipe {
 
     uint32_t localWritePtr = getPointer(writeVPtr_);
     uint32_t localWriteVersion = getVersion(writeVPtr_);
-    if (isWrap(static_cast<uint32_t>(sizeof(length)), localWritePtr) == true)
+    if (isWrap(static_cast<uint32_t>(sizeof(length)), localWritePtr))
     {
       localWritePtr = 0;
       localWriteVersion++;
@@ -438,7 +438,7 @@ namespace Pipe {
     uint32_t lengthPtr = localWritePtr;
     localWritePtr = localWritePtr + static_cast<uint32_t>(sizeof(length));
 
-    if (isWrap(length, localWritePtr) == true)
+    if (isWrap(length, localWritePtr))
     {
       localWritePtr = 0;
       localWriteVersion++;
@@ -462,7 +462,7 @@ namespace Pipe {
   {
     // numWritten_ must be incremented before the write_sync so that
     // the validate method can correctly sense corruption when numRead_ > numWritten_
-    numWritten_++
+    numWritten_++;
 
     // Make sure the data is written to the queue before the pointers are incremented.
     // This way if the queue reader sees incremented tick pointers, then the data will
